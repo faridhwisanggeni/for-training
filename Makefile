@@ -1,16 +1,14 @@
 SHELL                 = /bin/bash
-APP_NAME			  = cbs_transactions_server
+APP_NAME			  = pos
 VERSION               = $(shell git describe --always --tags)
 GIT_COMMIT            = $(shell git rev-parse HEAD)
 GIT_DIRTY             = $(shell test -n "`git status --porcelain`" && echo "+CHANGES" || true)
 BUILD_DATE            = $(shell date '+%Y-%m-%d-%H:%M:%S')
-MODULE_NAME			  = "github.com/dmssysdevteam/cbs_transactions_server"
+MODULE_NAME			  = "github.com/faspay/pos"
 APP_FLAG			  = $(flag)
 MIGRATION_NAME		  = $(name)
 MIGRATION_DIR		  = $(direction)
 PROTO_DIR			  = shared/proto
-PROTO_CONF_DIR		  = shared/cbs_conf/proto
-PROTO_ACCOUNT_DIR	  = shared/cbs_account/proto
 
 .PHONY: default
 default: help
@@ -56,27 +54,13 @@ newmigrate:
 	@echo "Generating new migration file"
 	echo -e "-- +migrate Up\r\n-- SQL in section 'Up' is executed when this migration is applied\r\n-- [your SQL script here]\r\n\r\n\r\n-- +migrate Down\r\n-- SQL section 'Down' is executed when this migration is rolled back\r\n-- [your SQL script here]" > "migration/postgres/$(shell date +%s)_${MIGRATION_NAME}.sql"
 
-.PHONY: newmigrate-acc
-newmigrate-acc:
-	@echo "Generating new migration acc file"
-	echo -e "-- +migrate Up\r\n-- SQL in section 'Up' is executed when this migration is applied\r\n-- [your SQL script here]\r\n\r\n\r\n-- +migrate Down\r\n-- SQL section 'Down' is executed when this migration is rolled back\r\n-- [your SQL script here]" > "migration/postgres-acc/$(shell date +%s)_${MIGRATION_NAME}.sql"
-
 .PHONY: migrate
 migrate: build
 	@echo "Running migration ${APP_NAME}"
 	bin/${APP_NAME} migrate direction=${direction}
-
-.PHONY: migrate-acc
-migrate-acc: build
-	@echo "Running migration ${APP_NAME}"
-	bin/${APP_NAME} migrate-acc direction=${direction}
 
 .PHONY: proto
 proto:
 	@echo "Compiling protobuf in ${PROTO_DIR}"
 	protoc --go_out=. --go_opt=paths=source_relative \
 	--go-grpc_out=. --go-grpc_opt=paths=source_relative ${PROTO_DIR}/*.proto;
-	protoc --go_out=. --go_opt=paths=source_relative \
-           	--go-grpc_out=. --go-grpc_opt=paths=source_relative ${PROTO_CONF_DIR}/*.proto;
-	protoc --go_out=. --go_opt=paths=source_relative \
-				--go-grpc_out=. --go-grpc_opt=paths=source_relative ${PROTO_ACCOUNT_DIR}/*.proto;
